@@ -1,4 +1,3 @@
-# worker.py
 from threading import Thread
 import sys
 

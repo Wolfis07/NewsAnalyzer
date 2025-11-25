@@ -1,5 +1,3 @@
-# news_analyzer.py
-
 import requests
 from bs4 import BeautifulSoup
 from queue import Queue
@@ -8,11 +6,10 @@ import csv
 import sys
 import time
 
-# Import třídy Worker
+
 from worker import Worker
 
-# --- 1. Konfigurace ---
-# Změna na The Register - velmi spolehlivý zdroj pro IT
+
 TARGET_URL = "https://www.theregister.com" 
 KEYWORDS = [
     "AI", "Security", "Cloud", "Microsoft", 
@@ -21,17 +18,15 @@ KEYWORDS = [
 NUM_WORKERS = 4
 CSV_HEADERS = ["TITLE", "URL", "TOTAL_SCORE", "STATUS"]
 
-# Hlavička, abychom vypadali jako prohlížeč
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36',
 }
 
-# Sdílené zdroje
 url_queue = Queue()
 results = []
 results_lock = Lock()
 
-# --- 2. Utility Funkce ---
+
 
 def analyze_text_score(text, keywords):
     text_lower = text.lower()
@@ -49,7 +44,7 @@ def save_results_to_csv(filename, headers, data):
         print(f"CHYBA VÝSTUPU: {e}", file=sys.stderr)
         return False
 
-# --- 3. Hlavní Funkce ---
+
 
 def main():
     start_time = time.time()
@@ -62,9 +57,7 @@ def main():
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # --- NOVÁ STRATEGIE PRO THE REGISTER ---
-        # The Register používá pro nadpisy článků tagy <h4> a občas <h3>
-        # Hledáme také třídu 'story_link', kterou často používají
+        
         potential_articles = soup.find_all(['h3', 'h4', 'article'])
         
         print(f"Prohledávám {len(potential_articles)} elementů...")
@@ -75,11 +68,11 @@ def main():
                 title = link.text.strip()
                 href = link.get('href')
                 
-                # Ignorujeme příliš krátké nadpisy (navigace atd.)
+                
                 if len(title) < 5:
                     continue
 
-                # Oprava relativních URL (The Register používá /2023/11/...)
+                
                 if href.startswith('/'):
                     full_url = TARGET_URL + href
                 elif href.startswith('http'):
