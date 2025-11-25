@@ -43,6 +43,7 @@ class TestAnalyzerIntegration(unittest.TestCase):
         mock_response = MagicMock()
         mock_response.status_code = 200
         
+       
         mock_response.content = b"""
             <html><body>
                 <h4><a href="/security/bug">Major Security Bug</a></h4>
@@ -50,9 +51,10 @@ class TestAnalyzerIntegration(unittest.TestCase):
             </body></html>"""
         mock_get.return_value = mock_response
 
+       
         news_analyzer.main()
         
-
+       
         self.assertEqual(len(results), 2)
         scores = {r['TOTAL_SCORE'] for r in results}
         self.assertIn(1, scores)
@@ -62,6 +64,7 @@ class TestAnalyzerIntegration(unittest.TestCase):
         """ Testuje, že se program ukončí, když nenajde žádné články. """
         mock_response = MagicMock()
         mock_response.status_code = 200
+        
         mock_response.content = b"<html><body><h1>Maintenance</h1></body></html>"
         mock_get.return_value = mock_response
 
@@ -76,7 +79,7 @@ class TestAnalyzerIntegration(unittest.TestCase):
         def crashing_analysis_func(text, keywords):
             raise ValueError("Simulated Crash!")
 
-        
+       
         local_test_queue = Queue()
         local_test_queue.put(("Bad Title", "http://bad.url"))
         

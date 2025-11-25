@@ -4,8 +4,8 @@
 | :--- | :--- |
 | **Název projektu:** | Paralelní News Analyzer (The Register) |
 | **Autor:** | Matěj Hodek |
-| **Kontaktní údaje:** | [dopln.email@skola.cz] |
-| **Škola:** | SPŠE |
+| **Kontaktní údaje:** | matejhodek005@gmail.com |
+| **Škola:** | SPŠE Ječná |
 | **Předmět:** | Programové vybavení |
 | **Datum vypracování:** | 24. 11. 2025 |
 | **Typ projektu:** | **Školní projekt** |
