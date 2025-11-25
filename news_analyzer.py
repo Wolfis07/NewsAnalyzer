@@ -12,7 +12,7 @@ import time
 from worker import Worker
 
 # --- 1. Konfigurace ---
-TARGET_URL = "https://www.theverge.com"  # Bez lomítka na konci pro snadnější spojování
+TARGET_URL = "https://www.theregister.com"  # Bez lomítka na konci pro snadnější spojování
 KEYWORDS = [
     "AI", "Apple", "Samsung", "Google",
     "Gaming", "SpaceX", "VR", "Cloud", "Review"
