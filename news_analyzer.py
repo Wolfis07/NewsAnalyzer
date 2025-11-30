@@ -12,18 +12,18 @@ import time
 from worker import Worker
 
 # --- 1. Konfigurace ---
-TARGET_URL = "https://www.theregister.com"  # Bez lomítka na konci pro snadnější spojování
+# Změna na The Register - velmi spolehlivý zdroj pro IT
+TARGET_URL = "https://www.theregister.com" 
 KEYWORDS = [
-    "AI", "Apple", "Samsung", "Google",
-    "Gaming", "SpaceX", "VR", "Cloud", "Review"
+    "AI", "Security", "Cloud", "Microsoft", 
+    "Linux", "Data", "Cyber", "Chip", "Code"
 ]
 NUM_WORKERS = 4
 CSV_HEADERS = ["TITLE", "URL", "TOTAL_SCORE", "STATUS"]
 
-# Robustní hlavička proti blokování (420 Error)
+# Hlavička, abychom vypadali jako prohlížeč
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept-Language': 'en-US,en;q=0.9',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36',
 }
 
 # Sdílené zdroje
@@ -49,12 +49,11 @@ def save_results_to_csv(filename, headers, data):
         print(f"CHYBA VÝSTUPU: {e}", file=sys.stderr)
         return False
 
-# --- 3. Hlavní Funkce (Producer) ---
+# --- 3. Hlavní Funkce ---
 
 def main():
     start_time = time.time()
     
-    # PRODUCER: Stahování a extrakce
     tasks = [] 
     try:
         print(f"Stahuji novinky z {TARGET_URL}...")
@@ -63,47 +62,48 @@ def main():
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # --- OPRAVENÁ STRATEGIE EXTRAKCE ---
-        # Hledáme nadpisy H2 a H3, které uvnitř mají odkaz <a>.
-        # To je standardní struktura HTML pro články a je mnohem stabilnější.
-        headlines = soup.find_all(['h2', 'h3'])
+        # --- NOVÁ STRATEGIE PRO THE REGISTER ---
+        # The Register používá pro nadpisy článků tagy <h4> a občas <h3>
+        # Hledáme také třídu 'story_link', kterou často používají
+        potential_articles = soup.find_all(['h3', 'h4', 'article'])
         
-        print(f"Prohledávám {len(headlines)} nadpisů...")
+        print(f"Prohledávám {len(potential_articles)} elementů...")
         
-        for h in headlines:
-            link = h.find('a')
-            if link and link.get('href') and link.text:
+        for item in potential_articles:
+            link = item.find('a')
+            if link and link.get('href'):
                 title = link.text.strip()
                 href = link.get('href')
                 
-                # Oprava relativních URL (pokud odkaz začíná /, přidáme doménu)
+                # Ignorujeme příliš krátké nadpisy (navigace atd.)
+                if len(title) < 5:
+                    continue
+
+                # Oprava relativních URL (The Register používá /2023/11/...)
                 if href.startswith('/'):
                     full_url = TARGET_URL + href
                 elif href.startswith('http'):
                     full_url = href
                 else:
-                    continue # Ignorujeme divné odkazy
+                    continue 
                 
-                # Filtrace duplicit (set by byl lepší, ale list stačí pro demo)
+                # Uložíme jen unikátní
                 if (title, full_url) not in tasks:
                     tasks.append((title, full_url))
 
         if not tasks:
-            print("VAROVÁNÍ: Nenalezeny žádné články. Struktura webu se mohla změnit.", file=sys.stderr)
-            # Debug: Vypíšeme část HTML pro kontrolu, pokud se nic nenajde
-            # print(soup.prettify()[:1000]) 
+            print("VAROVÁNÍ: Nenalezeny žádné články.", file=sys.stderr)
             sys.exit(1)
             
     except requests.exceptions.RequestException as e:
         print(f"CHYBA I/O: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Vložení do fronty
     print(f"Nalezeno {len(tasks)} unikátních článků. Spouštím analýzu...")
+    
     for task in tasks:
         url_queue.put(task)
     
-    # Spuštění vláken
     workers = []
     for _ in range(NUM_WORKERS):
         w = Worker(url_queue, KEYWORDS, results, results_lock, analyze_text_score)
