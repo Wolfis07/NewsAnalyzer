@@ -75,7 +75,7 @@ class NewsAnalyzerGUI:
         self.tree.column("url", width=400)
 
         scrollbar = ttk.Scrollbar(root, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscroll=scrollbar.set)
+        self.tree.configure(yscrollcommand=scrollbar.set)
         
         self.tree.pack(side="left", fill="both", expand=True, padx=10, pady=10)
         scrollbar.pack(side="right", fill="y", pady=10)
@@ -108,6 +108,10 @@ class NewsAnalyzerGUI:
             current_workers = int(self.workers_entry.get())
         except ValueError:
             messagebox.showerror("Chyba", "Počet vláken musí být číslo!")
+            return
+
+        if current_workers <= 0:
+            messagebox.showerror("Chyba", "Počet vláken musí být kladný!")
             return
 
         for i in self.tree.get_children():
@@ -161,14 +165,15 @@ class NewsAnalyzerGUI:
             count = 0
             found_urls = set()
 
+            # <a href="/bla-bla-bla">Titulek k linku</a>
             for link in soup.find_all('a', href=True):
                 href = link['href']
                 title_text = link.get_text(strip=True) or "Bez titulku"
 
-                # Inteligentní spojení URL
+                # Inteligentní spojení URL pro případ relativní cesty
                 full_link = urljoin(url, href)
 
-                if full_link.startswith("http") and full_link not in found_urls:
+                if full_link and full_link.startswith("http") not in found_urls:
                     found_urls.add(full_link)
                     queue.put((title_text, full_link))
                     count += 1
