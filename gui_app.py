@@ -7,6 +7,7 @@ from threading import Thread, Lock
 from urllib.parse import urljoin
 import time
 import sys
+import webbrowser  # <--- 1. PŘIDÁN IMPORT PRO OTEVÍRÁNÍ PROHLÍŽEČE
 
 # Import tvé existující třídy Worker
 from worker import Worker
@@ -67,7 +68,7 @@ class NewsAnalyzerGUI:
         self.tree.heading("score", text="Skóre")
         self.tree.heading("status", text="Stav")
         self.tree.heading("title", text="Titulek Článku")
-        self.tree.heading("url", text="URL")
+        self.tree.heading("url", text="URL (Dvojklik pro otevření)") # Upraven nadpis
 
         self.tree.column("score", width=50, anchor="center")
         self.tree.column("status", width=80, anchor="center")
@@ -79,6 +80,30 @@ class NewsAnalyzerGUI:
         
         self.tree.pack(side="left", fill="both", expand=True, padx=10, pady=10)
         scrollbar.pack(side="right", fill="y", pady=10)
+
+        # <--- 2. PŘIDÁN EVENT BINDING PRO DVOJKLIK --->
+        self.tree.bind("<Double-1>", self.on_tree_double_click)
+
+    # <--- 3. NOVÁ FUNKCE PRO OTEVŘENÍ ODKAZU --->
+    def on_tree_double_click(self, event):
+        """Zjistí, na co se kliklo, a pokud je to URL, otevře prohlížeč."""
+        # Zjistíme ID řádku pod myší
+        item_id = self.tree.identify_row(event.y)
+        if not item_id:
+            return
+
+        # Zjistíme sloupec pod myší (vrací např. '#4')
+        column_id = self.tree.identify_column(event.x)
+
+        # Sloupec URL je čtvrtý v pořadí, takže ID je '#4'
+        if column_id == '#4':
+            # Získáme hodnoty z daného řádku
+            values = self.tree.item(item_id, 'values')
+            if values:
+                url = values[3]  # URL je na indexu 3 (0=score, 1=status, 2=title, 3=url)
+                if url.startswith("http"):
+                    self.log_status(f"Otevírám: {url}")
+                    webbrowser.open(url)
 
     def log_status(self, message):
         self.status_label.config(text=message)
@@ -92,7 +117,6 @@ class NewsAnalyzerGUI:
         title_lower = title.lower()
         for k in keywords:
             if k.lower() in title_lower:
-                # --- ZDE JSME VRÁTILI BODOVÁNÍ NA +1 ---
                 score += 1 
         return score
 
@@ -165,15 +189,15 @@ class NewsAnalyzerGUI:
             count = 0
             found_urls = set()
 
-            # <a href="/bla-bla-bla">Titulek k linku</a>
             for link in soup.find_all('a', href=True):
                 href = link['href']
                 title_text = link.get_text(strip=True) or "Bez titulku"
 
-                # Inteligentní spojení URL pro případ relativní cesty
+                # Inteligentní spojení URL
                 full_link = urljoin(url, href)
 
-                if full_link and full_link.startswith("http") not in found_urls:
+                # Opravena drobná logická chyba v podmínce z původního kódu
+                if full_link and full_link.startswith("http") and full_link not in found_urls:
                     found_urls.add(full_link)
                     queue.put((title_text, full_link))
                     count += 1
