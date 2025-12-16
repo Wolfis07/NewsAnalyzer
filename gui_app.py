@@ -9,7 +9,6 @@ import time
 import sys
 import webbrowser  # <--- 1. PŘIDÁN IMPORT PRO OTEVÍRÁNÍ PROHLÍŽEČE
 
-# Import tvé existující třídy Worker
 from worker import Worker
 
 # --- Konfigurace ---
